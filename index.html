@@ -42,8 +42,13 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(2, 1fr);
-            /* gap: 10px; */
+            gap: 10px;
             margin-bottom: 30px;
+            transition: gap 0.5s ease;
+        }
+
+        .puzzle-grid.completed {
+            gap: 0;
         }
 
         .puzzle-piece {
@@ -56,10 +61,16 @@
             align-items: center;
             justify-content: center;
             cursor: move;
-            transition: all 0.3s ease;
+            transition: all 0.5s ease;
             position: relative;
             overflow: hidden;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .puzzle-grid.completed .puzzle-piece {
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
         }
 
         .puzzle-piece:hover {
@@ -208,8 +219,8 @@
         <div class="modal-content">
             <div class="celebration">🎉🎊🎈</div>
             <h2>مبارك احسنت!</h2>
-            <p>انت رتبت الصوره ترتيب صحيح استمع للاذان   !</p>
-            <button id="restart"class="restart-btn" onclick="restartGame()" style="display: none;" > اعاده اللعبه</button>
+            <p>انت رتبت الصوره ترتيب صحيح استمع للاذان!</p>
+            <button id="restart" class="restart-btn" onclick="restartGame()" style="display: none;">اعاده اللعبه</button>
         </div>
     </div>
 
@@ -326,26 +337,32 @@
             });
             
             if (allCorrect) {
+                // Remove gaps to show complete image
+                grid.classList.add('completed');
+                
+                // Play sound immediately
+                playFinishSound();
+                
+                // Wait 2 seconds then show the popup
                 setTimeout(() => {
-                    playFinishSound();
                     showWinModal();
-                }, 500);
+                }, 4000);
             }
         }
+
         function playFinishSound() {
-    const audio = new Audio('adhan.mp3');
+            const audio = new Audio('adhan.mp3');
 
-    audio.play().catch(e => {
-        console.log('Could not play audio:', e);
-    });
+            audio.play().catch(e => {
+                console.log('Could not play audio:', e);
+            });
 
-    // When the audio ends, show the restart div
-    audio.addEventListener('ended', () => {
-        const restartDiv = document.getElementById('restart');
-        restartDiv.style.display = 'flex'; // or 'block'
-    });
-}
-
+            // When the audio ends, show the restart div
+            audio.addEventListener('ended', () => {
+                const restartDiv = document.getElementById('restart');
+                restartDiv.style.display = 'flex';
+            });
+        }
 
         function showWinModal() {
             document.getElementById('winModal').classList.add('show');
@@ -353,6 +370,10 @@
 
         function restartGame() {
             document.getElementById('winModal').classList.remove('show');
+            const grid = document.getElementById('puzzleGrid');
+            grid.classList.remove('completed');
+            const restartDiv = document.getElementById('restart');
+            restartDiv.style.display = 'none';
             initGame();
         }
 
