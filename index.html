@@ -29,6 +29,11 @@
             font-size: 2.5em;
         }
 
+        /* Hide game before clicking Start */
+        #gameSection {
+            display: none;
+        }
+
         .game-container {
             background: white;
             border-radius: 20px;
@@ -89,33 +94,9 @@
             animation: pulse 0.5s ease;
         }
 
-        .puzzle-piece.incorrect {
-            animation: shake 0.5s ease;
-        }
-
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.1); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-
-        .drop-zone {
-            aspect-ratio: 1;
-            border: 3px dashed #ccc;
-            border-radius: 10px;
-            background: #f8f9fa;
-            transition: all 0.3s ease;
-        }
-
-        .drop-zone.drag-over {
-            background: #e3f2fd;
-            border-color: #2196f3;
-            transform: scale(1.05);
         }
 
         .modal {
@@ -136,11 +117,6 @@
             animation: fadeIn 0.3s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
         .modal-content {
             background: white;
             padding: 40px;
@@ -148,23 +124,6 @@
             text-align: center;
             animation: slideIn 0.5s ease;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-        }
-
-        @keyframes slideIn {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-content h2 {
-            color: #667eea;
-            font-size: 2.5em;
-            margin-bottom: 20px;
-        }
-
-        .modal-content p {
-            font-size: 1.2em;
-            margin-bottom: 30px;
-            color: #666;
         }
 
         .restart-btn {
@@ -177,41 +136,24 @@
             cursor: pointer;
             font-weight: bold;
             transition: transform 0.3s ease;
+            margin-bottom: 20px;
         }
 
         .restart-btn:hover {
             transform: scale(1.1);
         }
 
-        .celebration {
-            font-size: 3em;
-            animation: bounce 1s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .puzzle-piece {
-                font-size: 2em;
-            }
-
-            .game-container {
-                padding: 20px;
-            }
-        }
     </style>
 </head>
 <body>
+
     <h1>🧩 لعبه ترتيب صوره الاذان  🧩</h1>
-    
-    <div class="game-container">
+
+    <!-- Start Game Button -->
+    <button id="startBtn" class="restart-btn" onclick="startGame()">ابدأ اللعب</button>
+
+    <!-- Game Section (Hidden Until Start) -->
+    <div id="gameSection" class="game-container">
         <div class="puzzle-grid" id="puzzleGrid"></div>
     </div>
 
@@ -236,6 +178,17 @@
 
         let draggedElement = null;
         let draggedId = null;
+
+        /* ------------------- START GAME ------------------- */
+        function startGame() {
+            const startAudio = new Audio('start.mp3');
+            startAudio.play().catch(err => console.log(err));
+
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('gameSection').style.display = 'block';
+
+            initGame();
+        }
 
         function shuffleArray(array) {
             const shuffled = [...array];
@@ -273,7 +226,6 @@
             draggedElement = e.target;
             draggedId = e.target.dataset.id;
             e.target.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
         }
 
         function handleDragEnd(e) {
@@ -281,17 +233,11 @@
         }
 
         function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
-            e.dataTransfer.dropEffect = 'move';
-            return false;
+            e.preventDefault();
         }
 
         function handleDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
+            e.stopPropagation();
             
             const targetElement = e.target;
             
@@ -314,8 +260,6 @@
                 
                 checkPuzzle();
             }
-            
-            return false;
         }
 
         function checkPuzzle() {
@@ -337,30 +281,28 @@
             });
             
             if (allCorrect) {
-                // Remove gaps to show complete image
                 grid.classList.add('completed');
-                
-                // Play sound immediately
                 playFinishSound();
-                
-                // Wait 2 seconds then show the popup
                 setTimeout(() => {
                     showWinModal();
                 }, 4000);
             }
         }
 
+        /* ------------------- FIXED AUDIO CODE ------------------- */
         function playFinishSound() {
-            const audio = new Audio('adhan.mp3');
+            const finsh = new Audio('finsh.mp3');
+            finsh.play().catch(e => console.log(e));
 
-            audio.play().catch(e => {
-                console.log('Could not play audio:', e);
-            });
+            finsh.addEventListener('ended', () => {
+                
+                const adhan = new Audio('adhan.mp3');
 
-            // When the audio ends, show the restart div
-            audio.addEventListener('ended', () => {
-                const restartDiv = document.getElementById('restart');
-                restartDiv.style.display = 'flex';
+                adhan.play().catch(e => console.log(e));
+
+                adhan.addEventListener('ended', () => {
+                    document.getElementById('restart').style.display = 'flex';
+                });
             });
         }
 
@@ -370,14 +312,12 @@
 
         function restartGame() {
             document.getElementById('winModal').classList.remove('show');
-            const grid = document.getElementById('puzzleGrid');
-            grid.classList.remove('completed');
-            const restartDiv = document.getElementById('restart');
-            restartDiv.style.display = 'none';
+            document.getElementById('restart').style.display = 'none';
+            document.getElementById('puzzleGrid').classList.remove('completed');
+
             initGame();
         }
 
-        initGame();
     </script>
 </body>
 </html>
